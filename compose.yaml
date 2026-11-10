@@ -1,0 +1,17 @@
+services:
+  lava-camera:
+    build: .
+    ports:
+      - "${CAMERA_PORT:-3000}:3000"
+    environment:
+      CAMERA_NAME: "${CAMERA_NAME:-Camera 1}"
+      TZ: "${TZ:-UTC}"
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

@@ -1,0 +1,10 @@
+{
+  "name": "virtual-lava-camera",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic lava lamp security camera snapshots",
+  "scripts": { "start": "node server.js", "test": "node --test" },
+  "engines": { "node": ">=22" },
+  "dependencies": { "@napi-rs/canvas": "^0.1.80" }
+}

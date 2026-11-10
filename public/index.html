@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lava Cam · Camera feed simulator</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#101716;color:#e2e9e4}*{box-sizing:border-box}body{margin:0}main{max-width:1160px;margin:0 auto;padding:48px 24px}header{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:30px}.eyebrow{font:12px monospace;letter-spacing:2px;color:#92ada1}h1{font-size:30px;letter-spacing:-1px;margin:8px 0}p{color:#a6b4ac;line-height:1.6;margin:8px 0}.status{font:12px monospace;color:#b5d5b7;border:1px solid #354c40;border-radius:30px;padding:10px 14px;white-space:nowrap}.monitor{border:1px solid #3b4640;border-radius:10px;overflow:hidden;background:#080d0b;box-shadow:0 24px 80px #0004}.bar{padding:14px 20px;display:flex;justify-content:space-between;gap:12px;font:12px monospace;color:#9dac9f;background:#1b2521}img{display:block;width:100%;aspect-ratio:16/9;object-fit:contain}.details{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-top:24px;flex-wrap:wrap}a{color:#e3cba6;text-underline-offset:4px}code{font:14px monospace;color:#d9ded7}button{background:#28382e;color:#e2e9e4;border:1px solid #4d6454;border-radius:6px;padding:12px 18px;cursor:pointer}button:hover{background:#354b3d}footer{margin-top:44px;font:12px monospace;color:#718278}@media(max-width:600px){main{padding:28px 16px}header{align-items:flex-start;flex-direction:column}h1{font-size:26px}.bar{padding:12px;font-size:10px}}
+</style>
+</head>
+<body><main>
+<header><div><div class="eyebrow">VIRTUAL CAMERA / 01</div><h1>A little motion. Always on.</h1><p>A simulated security feed with a quietly drifting lava lamp.</p></div><div class="status" id="status" role="status">● CONNECTING</div></header>
+<section class="monitor" aria-label="Camera preview"><div class="bar"><span>LAVA CAM — SNAPSHOT MONITOR</span><span>1280 × 720 / JPEG / 1 FPS</span></div><img id="feed" alt="Security camera view of an animated lava lamp on a wooden table"><div class="bar"><span id="updated">Waiting for first frame</span><span>SYNTHETIC FEED</span></div></section>
+<div class="details"><div><a href="/snapshot.jpg">Open JPEG snapshot ↗</a><p>Point your camera client at <code>/snapshot.jpg</code> and fetch once per second.</p></div><button id="toggle" type="button">Pause preview</button></div>
+<footer>Motion follows server time · The camera keeps running while the preview is paused.</footer>
+</main><script>
+const feed=document.querySelector('#feed'),status=document.querySelector('#status'),updated=document.querySelector('#updated'),toggle=document.querySelector('#toggle');
+let paused=false,timer,controller,currentUrl,generation=0;
+async function refresh(){
+  if(paused)return;
+  const run=generation;
+  const requestController=new AbortController();controller=requestController;
+  const timeout=setTimeout(()=>requestController.abort(),8000);
+  try{
+    const response=await fetch('/snapshot.jpg?t='+Date.now(),{cache:'no-store',signal:requestController.signal});
+    if(!response.ok)throw new Error('Feed unavailable');
+    const blob=await response.blob();
+    if(paused||run!==generation)return;
+    const nextUrl=URL.createObjectURL(blob);
+    feed.src=nextUrl;
+    if(currentUrl)URL.revokeObjectURL(currentUrl);
+    currentUrl=nextUrl;status.textContent='● LIVE';updated.textContent='Received '+new Date().toLocaleTimeString();
+  }catch(error){if(!paused&&run===generation){status.textContent='● RECONNECTING';updated.textContent='Unable to fetch frame. Retrying…';}}
+  finally{clearTimeout(timeout);if(!paused&&run===generation)timer=setTimeout(refresh,1000-Date.now()%1000);}
+}
+toggle.addEventListener('click',()=>{paused=!paused;generation++;toggle.textContent=paused?'Resume preview':'Pause preview';if(paused){clearTimeout(timer);controller?.abort();status.textContent='Ⅱ PAUSED';}else{refresh();}});
+refresh();
+</script></body></html>
