@@ -17,7 +17,7 @@ export async function createCameraServer({ cameraName = process.env.CAMERA_NAME 
     }
     try {
       let body, type;
-      if (path === '/snapshot.jpg') {
+      if (path === '/snapshot.jpg' || path === '/GetSnapshot/1') {
         const second = Math.floor(now() / 1000);
         if (second !== cachedSecond) {
           cachedJpeg = renderer.jpeg(second * 1000); cachedSecond = second;

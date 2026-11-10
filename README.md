@@ -13,6 +13,7 @@ docker compose up -d --build
 
 - Preview page: http://localhost:3000/
 - Camera snapshot: http://localhost:3000/snapshot.jpg
+- Camera snapshot alias: http://localhost:3000/GetSnapshot/1
 - Health check: http://localhost:3000/healthz
 
 Configure your camera client to fetch the snapshot URL once per second. This is a

@@ -41,6 +41,10 @@ test('HTTP serves fresh snapshots, preview, health, HEAD and errors', async (t) 
   assert.equal(first.headers.get('content-type'),'image/jpeg');
   assert.match(first.headers.get('cache-control'),/no-store/);
   const bytes=Buffer.from(await first.arrayBuffer());
+  const alias=await fetch(base+'/GetSnapshot/1');
+  assert.equal(alias.status,200);
+  assert.equal(alias.headers.get('content-type'),'image/jpeg');
+  assert.deepEqual(bytes,Buffer.from(await alias.arrayBuffer()));
   assert.deepEqual(bytes,Buffer.from(await (await fetch(base+'/snapshot.jpg?cache=123')).arrayBuffer()));
   current+=1000;
   assert.notDeepEqual(bytes,Buffer.from(await (await fetch(base+'/snapshot.jpg')).arrayBuffer()));
