@@ -2,12 +2,18 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { createRenderer } from './renderer.js';
+import { createAquariumRenderer } from './aquarium.js';
 
-export async function createCameraServer({ cameraName = process.env.CAMERA_NAME || 'Camera 1', timeZone = process.env.TZ || 'UTC', now = Date.now } = {}) {
+export async function createCameraServer({ cameraName = process.env.CAMERA_NAME || 'Camera 1', camera2Name = process.env.CAMERA_2_NAME || 'Camera 2', timeZone = process.env.TZ || 'UTC', now = Date.now } = {}) {
   if (cameraName.length > 64 || /[\r\n]/.test(cameraName)) throw new Error('CAMERA_NAME must be a single line of at most 64 characters');
-  const renderer = createRenderer({ cameraName, timeZone });
+  if (camera2Name.length > 64 || /[\r\n]/.test(camera2Name)) throw new Error('CAMERA_2_NAME must be a single line of at most 64 characters');
+  const cameras = [
+    { renderer: createRenderer({ cameraName, timeZone }) },
+    { renderer: createAquariumRenderer({ cameraName: camera2Name, timeZone }) },
+  ];
+  const routes = new Map([['/snapshot.jpg', cameras[0]], ['/GetSnapshot/1', cameras[0]],
+    ['/aquarium.jpg', cameras[1]], ['/GetSnapshot/2', cameras[1]]]);
   const page = await readFile(new URL('./public/index.html', import.meta.url));
-  let cachedSecond, cachedJpeg;
   return createServer((req, res) => {
     const path = new URL(req.url, 'http://localhost').pathname;
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
@@ -17,12 +23,13 @@ export async function createCameraServer({ cameraName = process.env.CAMERA_NAME 
     }
     try {
       let body, type;
-      if (path === '/snapshot.jpg' || path === '/GetSnapshot/1') {
+      const camera = routes.get(path);
+      if (camera) {
         const second = Math.floor(now() / 1000);
-        if (second !== cachedSecond) {
-          cachedJpeg = renderer.jpeg(second * 1000); cachedSecond = second;
+        if (second !== camera.cachedSecond) {
+          camera.cachedJpeg = camera.renderer.jpeg(second * 1000); camera.cachedSecond = second;
         }
-        body = cachedJpeg; type = 'image/jpeg';
+        body = camera.cachedJpeg; type = 'image/jpeg';
       } else if (path === '/') { body = page; type = 'text/html; charset=utf-8'; }
       else if (path === '/healthz') { body = Buffer.from('ok\n'); type = 'text/plain'; }
       else { res.writeHead(404); res.end('Not found'); return; }

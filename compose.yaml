@@ -6,6 +6,7 @@ services:
     environment:
       CAMERA_NAME: "${CAMERA_NAME:-Camera 1}"
       TZ: "${TZ:-UTC}"
+      CAMERA_2_NAME: "${CAMERA_2_NAME:-Camera 2}"
     restart: unless-stopped
     init: true
     read_only: true

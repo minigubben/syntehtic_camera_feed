@@ -1,8 +1,10 @@
 # Virtual Lava Camera
 
-A Node.js fake security camera for testing snapshot consumers. It renders a fixed,
+Two Node.js fake security cameras for testing snapshot consumers. It renders a fixed,
 procedurally drawn room and table with an animated lava lamp, plus a camera name,
 recording indicator and server timestamp burned into every 1280 × 720 JPEG.
+Camera 2 shows a planted aquarium with seven colorful fish swimming at a more
+noticeable pace. The homepage previews both cameras with separate pause controls.
 No browser, external assets, GPU, or external services are required for rendering.
 
 ## Run with Docker Compose
@@ -14,6 +16,8 @@ docker compose up -d --build
 - Preview page: http://localhost:3000/
 - Camera snapshot: http://localhost:3000/snapshot.jpg
 - Camera snapshot alias: http://localhost:3000/GetSnapshot/1
+- Aquarium snapshot: http://localhost:3000/aquarium.jpg
+- Aquarium snapshot alias: http://localhost:3000/GetSnapshot/2
 - Health check: http://localhost:3000/healthz
 
 Configure your camera client to fetch the snapshot URL once per second. This is a
@@ -25,11 +29,12 @@ Optional environment variables (shell or a `.env` file beside `compose.yaml`):
 ```dotenv
 CAMERA_PORT=3000
 CAMERA_NAME=Camera 1
+CAMERA_2_NAME=Camera 2
 TZ=UTC
 ```
 
 `TZ` accepts an IANA timezone, such as `Europe/Stockholm`, and affects the OSD only.
-Restart/recreate the service after configuration changes. `CAMERA_NAME` supports
+Restart/recreate the service after configuration changes. `CAMERA_NAME` and `CAMERA_2_NAME` each support
 up to 64 characters. For direct Node.js use, `PORT` sets the listening port.
 
 ## Run without Docker
@@ -50,7 +55,10 @@ There is no accumulated simulation state, random frame jitter, or animation rese
 when a viewer connects. Clock corrections can move the animation because it follows
 system time.
 
-Frames are quantized to whole seconds and cached for that second, so all clients
+Aquarium fish follow continuous 34–64 second paths derived from the same Unix
+clock, with smooth turns and tail movement. Its plants, gravel, and tank stay fixed.
+
+Frames are quantized to whole seconds and cached separately per camera for that second, so all clients
 receive the same image and multiple requests do not duplicate rendering work.
 HTTP caching is disabled. The preview polls on second boundaries, retains the last
 image during errors, and retries automatically. Pausing affects only the preview.

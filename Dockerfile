@@ -3,7 +3,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends fonts-dejavu-co
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
-COPY --chown=node:node server.js renderer.js ./
+COPY --chown=node:node server.js renderer.js aquarium.js ./
 COPY --chown=node:node public ./public
 COPY --chown=node:node assets ./assets
 USER node
